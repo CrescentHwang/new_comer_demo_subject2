@@ -14,9 +14,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.newcomerdemo.R;
 import com.example.newcomerdemo.model.PictureItem;
-import com.example.newcomerdemo.model.PicturesUrlGetter;
 
 import java.util.ArrayList;
+
 
 public class PictureListShowRecyclerViewAdapter
         extends RecyclerView.Adapter<PictureListShowRecyclerViewAdapter.PictureListViewHolder> {
@@ -27,6 +27,10 @@ public class PictureListShowRecyclerViewAdapter
     // 借助接口将 itemView 的 onClick() 方法暴露给外界
     public interface OnItemClickListener {
         void onItemClick(View view, int position);
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.mOnItemClickListener = listener;
     }
 
     public PictureListShowRecyclerViewAdapter(Context context, ArrayList<PictureItem> items) {
@@ -46,15 +50,18 @@ public class PictureListShowRecyclerViewAdapter
     @Override
     public void onBindViewHolder(@NonNull PictureListViewHolder holder, final int position) {
         final PictureItem item = mItems.get(position);
+        // 设置图片
         Glide.with(mContext)
                 .load(item.getmUrl())
-                .thumbnail(0.5f)
                 .error(R.drawable.picture_err)
+                .thumbnail(0.3f)
                 .into(holder.mImageView);
+        // 设置文字说明
         holder.mDescriptionTV.setText(item.getmDescription());
+        // 设置创建时间
         holder.mCreateTimeTV.setText(item.getmCreateTime().substring(0,10));
+        // 设置观看数
         holder.mViewNumTV.setText(item.getmViewNumber()+"");
-
         // 为 itemView 添加点击事件
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override

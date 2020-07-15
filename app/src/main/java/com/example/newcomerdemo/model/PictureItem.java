@@ -1,10 +1,13 @@
 package com.example.newcomerdemo.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import androidx.annotation.NonNull;
 
 import com.google.gson.annotations.SerializedName;
 
-public class PictureItem {
+public class PictureItem implements Parcelable {
     @SerializedName("_id")
     private String mId;
 
@@ -69,4 +72,41 @@ public class PictureItem {
                 + "\nmViewNumber : " + mViewNumber
                 + "\nmDescription : " + mDescription;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(this.mId);
+        dest.writeString(this.mCreateTime);
+        dest.writeString(this.mUrl);
+        dest.writeInt(this.mViewNumber);
+        dest.writeString(this.mDescription);
+    }
+
+    public PictureItem() {
+    }
+
+    protected PictureItem(Parcel in) {
+        this.mId = in.readString();
+        this.mCreateTime = in.readString();
+        this.mUrl = in.readString();
+        this.mViewNumber = in.readInt();
+        this.mDescription = in.readString();
+    }
+
+    public static final Creator<PictureItem> CREATOR = new Creator<PictureItem>() {
+        @Override
+        public PictureItem createFromParcel(Parcel source) {
+            return new PictureItem(source);
+        }
+
+        @Override
+        public PictureItem[] newArray(int size) {
+            return new PictureItem[size];
+        }
+    };
 }

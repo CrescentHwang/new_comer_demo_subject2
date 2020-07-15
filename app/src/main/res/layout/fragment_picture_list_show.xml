@@ -7,7 +7,7 @@
     android:orientation="vertical"
     tools:ignore="MissingClass"
     android:id="@+id/picture_list_refresh_layout"
-    android:background="#ccc">
+    android:background="#111">
 
     <com.scwang.smart.refresh.header.ClassicsHeader
         android:layout_width="match_parent"
