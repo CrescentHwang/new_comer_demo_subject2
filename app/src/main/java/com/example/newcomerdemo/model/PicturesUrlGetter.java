@@ -70,7 +70,6 @@ public class PicturesUrlGetter {
                         PictureItem item = mGson.fromJson(String.valueOf(dataArray.getJSONObject(i)), PictureItem.class);
                         items.add(item);
                         // 测试
-                        Log.i("test", item.toString());
                     }
                     // 数据对象解析完毕，传递给主线程
                     Message message = new Message();

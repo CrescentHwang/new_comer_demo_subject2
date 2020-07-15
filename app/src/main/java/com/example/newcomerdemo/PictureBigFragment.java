@@ -31,6 +31,8 @@ public class PictureBigFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // 销毁 fragment 视图，但不销毁 fragment 本身
+        setRetainInstance(true);
         // TODO 传入的对象为 null
     }
 

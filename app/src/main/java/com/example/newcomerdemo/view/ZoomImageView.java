@@ -7,6 +7,7 @@ import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -182,46 +183,7 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
     @Override
     public void onGlobalLayout() {
         if (mIsOneLoad) {
-
-            //得到控件的宽和高
-            int width = getWidth();
-            int height = getHeight();
-
-            //获取图片,如果没有图片则直接退出
-            Drawable drawable = getDrawable();
-            if (drawable == null)
-                return;
-
-            //获取图片的宽和高
-            int drawableWidth = drawable.getIntrinsicWidth();
-            int drawableHeight = drawable.getIntrinsicHeight();
-
-            float scale = 1.0f;
-            if (drawableWidth > width && drawableHeight <= height) {
-                scale = width * 1.0f / drawableWidth;
-            }
-            if (drawableWidth <= width && drawableHeight > height) {
-                scale = height * 1.0f / drawableHeight;
-            }
-            if ((drawableWidth <= width && drawableHeight <= height) || (drawableWidth >= width && drawableHeight >= height)) {
-                scale = Math.min(width * 1.0f / drawableWidth, height * 1.0f / drawableHeight);
-            }
-
-            //图片原始比例，图片回复原始大小时使用
-            mInitScale = scale;
-            //图片双击后放大的比例
-            mMidScale = mInitScale * 2;
-            //手势放大时最大比例
-            mMaxScale = mInitScale * 4;
-
-            //设置移动数据,把改变比例后的图片移到中心点
-            float translationX = width * 1.0f / 2 - drawableWidth / 2;
-            float translationY = height * 1.0f / 2 - drawableHeight / 2;
-
-            mScaleMatrix.postTranslate(translationX, translationY);
-            mScaleMatrix.postScale(mInitScale, mInitScale, width * 1.0f / 2, height * 1.0f / 2);
-            setImageMatrix(mScaleMatrix);
-            mIsOneLoad = false;
+            initPictHorizonFilled();
         }
     }
 
@@ -483,6 +445,83 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
         } else {
             return rect.top <= 0 - 1;
         }
+    }
+
+    // 图片横向填充
+    private void initPictHorizonFilled() {
+        //得到控件的宽和高
+        int width = getWidth();
+        int height = getHeight();
+
+        //获取图片,如果没有图片则直接退出
+        Drawable drawable = getDrawable();
+        if (drawable == null) {
+            return;
+        }
+
+        //获取图片的宽和高
+        int drawableWidth = drawable.getIntrinsicWidth();
+        int drawableHeight = drawable.getIntrinsicHeight();
+
+        float scale;
+        scale = width * 1.0f / drawableWidth;
+
+        //图片原始比例，图片回复原始大小时使用
+        mInitScale = scale;
+        //图片双击后放大的比例
+        mMidScale = mInitScale * 2;
+        //手势放大时最大比例
+        mMaxScale = mInitScale * 4;
+
+        //设置移动数据,把改变比例后的图片移到中心点
+        float translationX = width * 1.0f / 2 - drawableWidth / 2;
+        float translationY = height * 1.0f / 2 - drawableHeight / 2;
+
+        mScaleMatrix.postTranslate(translationX, translationY);
+        mScaleMatrix.postScale(mInitScale, mInitScale, width * 1.0f / 2, height * 1.0f / 2);
+    }
+
+    // 图片最适宜填充。即能整屏幕显示图片，但长宽中短边存在空白。
+    private void initPictFixFilled() {
+            // 得到控件的宽和高
+            int width = getWidth();
+            int height = getHeight();
+
+            //获取图片,如果没有图片则直接退出
+            Drawable drawable = getDrawable();
+            if (drawable == null)
+                return;
+
+            //获取图片的宽和高
+            int drawableWidth = drawable.getIntrinsicWidth();
+            int drawableHeight = drawable.getIntrinsicHeight();
+
+            float scale = 1.0f;
+            if (drawableWidth > width && drawableHeight <= height) {
+                scale = width * 1.0f / drawableWidth;
+            }
+            if (drawableWidth <= width && drawableHeight > height) {
+                scale = height * 1.0f / drawableHeight;
+            }
+            if ((drawableWidth <= width && drawableHeight <= height) || (drawableWidth >= width && drawableHeight >= height)) {
+                scale = Math.min(width * 1.0f / drawableWidth, height * 1.0f / drawableHeight);
+            }
+
+            //图片原始比例，图片回复原始大小时使用
+            mInitScale = scale;
+            //图片双击后放大的比例
+            mMidScale = mInitScale * 2;
+            //手势放大时最大比例
+            mMaxScale = mInitScale * 4;
+
+            //设置移动数据,把改变比例后的图片移到中心点
+            float translationX = width * 1.0f / 2 - drawableWidth / 2;
+            float translationY = height * 1.0f / 2 - drawableHeight / 2;
+
+            mScaleMatrix.postTranslate(translationX, translationY);
+            mScaleMatrix.postScale(mInitScale, mInitScale, width * 1.0f / 2, height * 1.0f / 2);
+            setImageMatrix(mScaleMatrix);
+            mIsOneLoad = false;
     }
 
 }

@@ -21,4 +21,6 @@ public class PictureBigActivity extends SingleFragmentActivity {
     protected Fragment createFragment() {
         return new PictureBigFragment((PictureItem)getIntent().getParcelableExtra(PictureBigFragment.PICTURE_OBJECT_TAG));
     }
+
+
 }
