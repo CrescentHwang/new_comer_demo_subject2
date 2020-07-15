@@ -100,7 +100,7 @@ public class PictureListShowFragment extends Fragment {
         adapter.setOnItemClickListener(new PictureListShowRecyclerViewAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(View view, int position) {
-                startActivity(PictureBigActivity.newIntent(getActivity(), items.get(position)));
+                startActivity(PictureBigActivity.newIntent(getActivity(), items, position));
             }
         });
         mPictureListRecyclerView.setAdapter(adapter);

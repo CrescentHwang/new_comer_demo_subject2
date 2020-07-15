@@ -60,7 +60,6 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
         super(context, attrs, defStyleAttr);
         //记住，一定要把ScaleType设置成ScaleType.MATRIX，否则无法缩放
         setScaleType(ScaleType.MATRIX);
-
         scroller = new OverScroller(context);
         mScaleMatrix = new Matrix();
         //手势缩放
@@ -187,6 +186,8 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
         }
     }
 
+
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         return mScaleGestureDetector.onTouchEvent(event)|
@@ -207,7 +208,6 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
         mScaleMatrix.postScale(scaleFactor, scaleFactor, detector.getFocusX(), detector.getFocusY());
         setImageMatrix(mScaleMatrix);
         removeBorderAndTranslationCenter();
-
     }
 
     //手势操作结束
@@ -223,10 +223,10 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
 
     //手势操作（移动）
     private void onTranslationImage(float dx, float dy) {
+        Log.i("TEST", "onTranslationImage()");
 
         if (getDrawable() == null)
             return;
-
         RectF rect = getMatrixRectF();
 
         //图片宽度小于控件宽度时不允许左右移动
@@ -248,6 +248,8 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
 
     //消除控件边界和把图片移动到中间
     private void removeBorderAndTranslationCenter() {
+        Log.i("TEST", "removeBorderAndTranslationCenter()");
+
         RectF rectF = getMatrixRectF();
         if (rectF == null)
             return;
@@ -286,7 +288,7 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
             //顶部有边界
             if (heightF > height) {
                 //图片高度大于控件高度，去除顶部边界
-                translationY = -top;
+                translationY = - top;
             } else {
                 //图片高度小于控件宽度，移动到中间
                 translationY = height * 1.0f / 2f - (top + heightF * 1.0f / 2f);
@@ -313,6 +315,8 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
      * @param y 点击的中心点
      */
     private void onDoubleDrowScale(float x, float y) {
+        Log.i("TEST", "onDoubleDrowScale()");
+
         //如果缩放动画已经在执行，那就不执行任何事件
         if (mAnimator != null && mAnimator.isRunning())
             return;
@@ -351,6 +355,7 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
 
     //返回双击后改变的大小比例(我们希望缩放误差在deviation范围内)
     private float getDoubleDrowScale() {
+        Log.i("TEST", "getDoubleDrowScale()");
         float deviation = 0.05f;
         float drowScale = 1.0f;
         float scale = getScale();
@@ -383,6 +388,7 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
 
     //获取图片宽高以及左右上下边界
     private RectF getMatrixRectF() {
+        Log.i("TEST", "getMatrixRectF()");
 
         Drawable drawable = getDrawable();
         if (drawable == null) {
@@ -425,7 +431,6 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
         } else {
             return rect.left <= 0 - 1;
         }
-
     }
 
     /**
@@ -449,6 +454,7 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
 
     // 图片横向填充
     private void initPictHorizonFilled() {
+        Log.i("TEST", "initPictHorizonFilled()");
         //得到控件的宽和高
         int width = getWidth();
         int height = getHeight();
@@ -479,6 +485,8 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
 
         mScaleMatrix.postTranslate(translationX, translationY);
         mScaleMatrix.postScale(mInitScale, mInitScale, width * 1.0f / 2, height * 1.0f / 2);
+
+        Log.i("TEST", "TEST");
     }
 
     // 图片最适宜填充。即能整屏幕显示图片，但长宽中短边存在空白。
@@ -524,4 +532,9 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
             mIsOneLoad = false;
     }
 
+    // 判断是否图片宽度是否小于等于屏幕宽度
+    public boolean isPictNarrowerThanScreen() {
+//        return getDrawable().getIntrinsicWidth() <= getWidth();
+        return false;
+    }
 }
