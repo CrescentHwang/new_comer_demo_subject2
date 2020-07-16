@@ -27,7 +27,7 @@ public abstract class SingleFragmentActivity extends AppCompatActivity {
             fragment = createFragment();
             fm.beginTransaction()
                     .add(R.id.fragment_container, fragment)
-                    .commit();
+                    .commitAllowingStateLoss();
         }
     }
 }

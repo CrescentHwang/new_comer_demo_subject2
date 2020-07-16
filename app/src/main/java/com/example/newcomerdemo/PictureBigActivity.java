@@ -26,7 +26,6 @@ public class PictureBigActivity extends AppCompatActivity {
     private ViewPager mViewPager;
     private ArrayList<PictureItem> mPictureItemsArrayList;
     private int mPosition;
-    private FragmentManager mFm;
 
     public static Intent newIntent(Context context,
                                    ArrayList<PictureItem> pictureItemArrList, int position) {
@@ -44,8 +43,8 @@ public class PictureBigActivity extends AppCompatActivity {
         mPosition = getIntent().getIntExtra(POSITION_TAG,0);
         mViewPager = findViewById(R.id.picture_big_view_pager);
         // 设置 fragment
-        mFm = getSupportFragmentManager();
-        mViewPager.setAdapter(new FragmentStatePagerAdapter(mFm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
+        FragmentManager fm = getSupportFragmentManager();
+        mViewPager.setAdapter(new FragmentStatePagerAdapter(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
             @NonNull
             @Override
             public Fragment getItem(int position) {

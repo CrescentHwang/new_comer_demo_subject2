@@ -26,12 +26,9 @@ import java.util.ArrayList;
 
 public class PictureListShowFragment extends Fragment {
     private RecyclerView mPictureListRecyclerView;
-    private ArrayList<PictureItem> items = new ArrayList<>();
+    private ArrayList<PictureItem> mItems = new ArrayList<>();;
     private RefreshLayout mRefreshLayout;
-    public static final int PICTURE_GETTING_TAG = 1000;
-    public static final int SUCCESSFUL_TAG = 101;
-    public static final int FAILURE_TAG = 102;
-    private int mPhotoPage = 1;
+    private int mPhotoPage = 0;
     private int mPhontCount = 40;
     private static Handler mPicUrlGetterHandler;
 
@@ -54,8 +51,10 @@ public class PictureListShowFragment extends Fragment {
             public void handleMessage(@NonNull Message msg) {
                 switch (msg.what) {
                     // 获取图片列表信息 成功
-                    case PICTURE_GETTING_TAG :
-                        dealWithItems(msg);
+                    case PicturesUrlGetter.PICTURE_GETTING_TAG :
+                        if(isAdded()) {
+                            dealWithItems(msg);
+                        }
                         break;
                     default:
                         break;
@@ -67,27 +66,42 @@ public class PictureListShowFragment extends Fragment {
         // 初始化组件
         initUI();
         // 首次获取 picture url
-        PicturesUrlGetter.getInstance().getPicturesUrl(mPicUrlGetterHandler, PICTURE_GETTING_TAG, getUrl());
+        PicturesUrlGetter.getInstance().getPicturesUrl(mPicUrlGetterHandler, getUrl());
         return v;
     }
 
     // 获取图片列表信息的 url
     private String getUrl() {
         String url = "https://gank.io/api/v2/data/category/Girl/type/Girl/page/"+mPhotoPage+"/count/"+mPhontCount;
-        mPhotoPage++;
         return url;
     }
 
     // 获取图片列表信息后的处理
     private void dealWithItems(Message msg) {
         switch(msg.arg1) {
-            case SUCCESSFUL_TAG:
-                items.addAll((ArrayList<PictureItem>)msg.obj);
+            case PicturesUrlGetter.SUCCESSFUL_TAG: // 成功获取图片s Url
+                mItems.addAll((ArrayList<PictureItem>)msg.obj);
+                mPhotoPage++;
                 // 更新 adapter
                 updateAdapter();
                 break;
-            case FAILURE_TAG:
-                MessageDialog.showToast(getActivity(), "图片加载失败，请重试");
+            case PicturesUrlGetter.FAILURE_TAG: // 无法获取图片s Url
+                switch (msg.arg2) {
+                    case PicturesUrlGetter.NO_PICTURE_TAG :
+                        MessageDialog.showToast(getActivity(), R.string.pictures_url_no_picture_error);
+                        break;
+                    case PicturesUrlGetter.REQUEST_ERROR :
+                        MessageDialog.showToast(getActivity(), R.string.pictures_url_request_error);
+                        break;
+                    case PicturesUrlGetter.JSON_OBJECT_PARSE_ERROR :
+                        MessageDialog.showToast(getActivity(), R.string.pictures_url_json_object_parsing_error);
+                        break;
+                    case PicturesUrlGetter.JSON_OBJECT_TRANSLATE_ERROR :
+                        MessageDialog.showToast(getActivity(), R.string.pictures_url_json_object_translate_error);
+                        break;
+                    default:
+                        MessageDialog.showToast(getActivity(), R.string.pictures_url_getting_error);
+                }
                 break;
         }
     }
@@ -101,12 +115,12 @@ public class PictureListShowFragment extends Fragment {
 
     // 初始化UI组件
     private void initUI() {
-        PictureListShowRecyclerViewAdapter adapter = new PictureListShowRecyclerViewAdapter(getContext(), items);
+        PictureListShowRecyclerViewAdapter adapter = new PictureListShowRecyclerViewAdapter(getContext(), mItems);
         // adapter 设置点击事件
         adapter.setOnItemClickListener(new PictureListShowRecyclerViewAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(View view, int position) {
-                startActivity(PictureBigActivity.newIntent(getActivity(), items, position));
+                startActivity(PictureBigActivity.newIntent(getActivity(), mItems, position));
             }
         });
         mPictureListRecyclerView.setAdapter(adapter);
@@ -117,8 +131,8 @@ public class PictureListShowFragment extends Fragment {
         mRefreshLayout.setOnLoadMoreListener(new OnLoadMoreListener() {
             @Override
             public void onLoadMore(RefreshLayout refreshlayout) {
-                PicturesUrlGetter.getInstance().getPicturesUrl(mPicUrlGetterHandler, PICTURE_GETTING_TAG, getUrl());
-                refreshlayout.finishLoadMore(1000);
+                PicturesUrlGetter.getInstance().getPicturesUrl(mPicUrlGetterHandler, getUrl());
+                refreshlayout.finishLoadMore(500);
             }
         });
     }

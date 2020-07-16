@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NewComerDemo</string>
+    <string name="pictures_url_getting_error">fail to load image,please try again</string>
+    <string name="pictures_url_json_object_parsing_error">fail to parse json object,please try again</string>
+    <string name="pictures_url_json_object_translate_error">fail to translate json object,please try again</string>
+    <string name="pictures_url_request_error">fail to request url,please try again</string>
+    <string name="pictures_url_no_picture_error">there are no more pictures,please try later</string>
+</resources>

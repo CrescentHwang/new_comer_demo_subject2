@@ -214,9 +214,9 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
         float scale = getScale();
         scale = detector.getScaleFactor() * scale;
         if (scale < mInitScale) {
-            scaleAnimation(mInitScale, getWidth() / 2, getHeight() / 2);
+            scaleAnimation(mInitScale, getWidth()  * 1.0f / 2, getHeight()  * 1.0f / 2);
         } else if (scale > mMaxScale) {
-            scaleAnimation(mMaxScale, getWidth() / 2, getHeight() / 2);
+            scaleAnimation(mMaxScale, getWidth()  * 1.0f / 2, getHeight()  * 1.0f / 2);
         }
     }
 
