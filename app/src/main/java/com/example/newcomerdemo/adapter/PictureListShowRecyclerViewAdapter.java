@@ -41,7 +41,6 @@ public class PictureListShowRecyclerViewAdapter
     @NonNull
     @Override
     public PictureListViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // todo 圆角！
         View v = LayoutInflater.from(parent.getContext()).
                 inflate(R.layout.item_picture_list_show, parent, false);
         return new PictureListViewHolder(v);

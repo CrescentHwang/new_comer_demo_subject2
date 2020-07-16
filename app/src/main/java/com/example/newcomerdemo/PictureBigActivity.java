@@ -4,35 +4,29 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentStatePagerAdapter;
+import androidx.viewpager.widget.ViewPager;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.MotionEvent;
-import android.view.View;
 
 import com.example.newcomerdemo.model.PictureItem;
 
 import java.util.ArrayList;
 
+import static androidx.fragment.app.FragmentStatePagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT;
+
 
 public class PictureBigActivity extends AppCompatActivity {
     public static final String PICTURES_ARRAY_LIST = "PictureBigActivity.PicturesArrList";
     public static final String POSITION_TAG = "PictureBigActivity.Position";
-    private ViewPager2 mViewPager;
+    private ViewPager mViewPager;
     private ArrayList<PictureItem> mPictureItemsArrayList;
     private int mPosition;
     private FragmentManager mFm;
-    private CanBeDraggedOutListener mCanBeDraggedOutListener;
-    public interface CanBeDraggedOutListener {
-        boolean canBeDraggedOut();
-    }
-    public void setCanBeDraggedOutListener(CanBeDraggedOutListener canBeDraggedOutListener) {
-        this.mCanBeDraggedOutListener = canBeDraggedOutListener;
-    }
 
     public static Intent newIntent(Context context,
                                    ArrayList<PictureItem> pictureItemArrList, int position) {
@@ -51,27 +45,18 @@ public class PictureBigActivity extends AppCompatActivity {
         mViewPager = findViewById(R.id.picture_big_view_pager);
         // 设置 fragment
         mFm = getSupportFragmentManager();
-        // 设置 adapter
-        mViewPager.setAdapter(new FragmentStateAdapter(mFm, getLifecycle()) {
-            @Override
-            public int getItemCount() {
-                return mPictureItemsArrayList.size();
-            }
-
+        mViewPager.setAdapter(new FragmentStatePagerAdapter(mFm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
             @NonNull
             @Override
-            public Fragment createFragment(int position) {
-                final PictureBigItemFragment fragment = new PictureBigItemFragment(mPictureItemsArrayList.get(position));
-                setCanBeDraggedOutListener(new CanBeDraggedOutListener() {
-                    @Override
-                    public boolean canBeDraggedOut() {
-                        return fragment.canBeDraggedOut();
-                    }
-                });
+            public Fragment getItem(int position) {
                 return new PictureBigItemFragment(mPictureItemsArrayList.get(position));
+            }
+
+            @Override
+            public int getCount() {
+                return mPictureItemsArrayList.size();
             }
         });
         mViewPager.setCurrentItem(mPosition, false);
-        mViewPager.setUserInputEnabled(false);
     }
 }

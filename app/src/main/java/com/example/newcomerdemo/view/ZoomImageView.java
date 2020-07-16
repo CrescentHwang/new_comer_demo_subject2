@@ -7,7 +7,6 @@ import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -223,7 +222,6 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
 
     //手势操作（移动）
     private void onTranslationImage(float dx, float dy) {
-        Log.i("TEST", "onTranslationImage()");
 
         if (getDrawable() == null)
             return;
@@ -248,7 +246,6 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
 
     //消除控件边界和把图片移动到中间
     private void removeBorderAndTranslationCenter() {
-        Log.i("TEST", "removeBorderAndTranslationCenter()");
 
         RectF rectF = getMatrixRectF();
         if (rectF == null)
@@ -305,7 +302,7 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
         }
 
         mScaleMatrix.postTranslate(translationX, translationY);
-        setImageMatrix(mScaleMatrix);
+//        setImageMatrix(mScaleMatrix);
     }
 
     /**
@@ -315,7 +312,6 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
      * @param y 点击的中心点
      */
     private void onDoubleDrowScale(float x, float y) {
-        Log.i("TEST", "onDoubleDrowScale()");
 
         //如果缩放动画已经在执行，那就不执行任何事件
         if (mAnimator != null && mAnimator.isRunning())
@@ -355,7 +351,6 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
 
     //返回双击后改变的大小比例(我们希望缩放误差在deviation范围内)
     private float getDoubleDrowScale() {
-        Log.i("TEST", "getDoubleDrowScale()");
         float deviation = 0.05f;
         float drowScale = 1.0f;
         float scale = getScale();
@@ -388,7 +383,6 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
 
     //获取图片宽高以及左右上下边界
     private RectF getMatrixRectF() {
-        Log.i("TEST", "getMatrixRectF()");
 
         Drawable drawable = getDrawable();
         if (drawable == null) {
@@ -454,7 +448,6 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
 
     // 图片横向填充
     private void initPictHorizonFilled() {
-        Log.i("TEST", "initPictHorizonFilled()");
         //得到控件的宽和高
         int width = getWidth();
         int height = getHeight();
@@ -465,12 +458,11 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
             return;
         }
 
-        //获取图片的宽和高
+        //获取图片的宽
         int drawableWidth = drawable.getIntrinsicWidth();
         int drawableHeight = drawable.getIntrinsicHeight();
 
-        float scale;
-        scale = width * 1.0f / drawableWidth;
+        float scale = width * 1.0f / (drawableWidth * 1.0f);
 
         //图片原始比例，图片回复原始大小时使用
         mInitScale = scale;
@@ -485,12 +477,12 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
 
         mScaleMatrix.postTranslate(translationX, translationY);
         mScaleMatrix.postScale(mInitScale, mInitScale, width * 1.0f / 2, height * 1.0f / 2);
-
-        Log.i("TEST", "TEST");
+        setImageMatrix(mScaleMatrix);
+        mIsOneLoad = false;
     }
 
-    // 图片最适宜填充。即能整屏幕显示图片，但长宽中短边存在空白。
-    private void initPictFixFilled() {
+    // 图片不留空白填充。
+    private void initPictFullilled() {
             // 得到控件的宽和高
             int width = getWidth();
             int height = getHeight();
@@ -505,14 +497,14 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
             int drawableHeight = drawable.getIntrinsicHeight();
 
             float scale = 1.0f;
-            if (drawableWidth > width && drawableHeight <= height) {
+            if (drawableWidth > width && drawableHeight <= height) { // 图片比控件宽，图片比控件矮
                 scale = width * 1.0f / drawableWidth;
             }
-            if (drawableWidth <= width && drawableHeight > height) {
+            if (drawableWidth <= width && drawableHeight > height) { // 图片比控件窄，图片比控件高
                 scale = height * 1.0f / drawableHeight;
             }
             if ((drawableWidth <= width && drawableHeight <= height) || (drawableWidth >= width && drawableHeight >= height)) {
-                scale = Math.min(width * 1.0f / drawableWidth, height * 1.0f / drawableHeight);
+                scale = Math.max(width * 1.0f / drawableWidth, height * 1.0f / drawableHeight);
             }
 
             //图片原始比例，图片回复原始大小时使用
@@ -532,9 +524,4 @@ public class ZoomImageView extends AppCompatImageView implements ViewTreeObserve
             mIsOneLoad = false;
     }
 
-    // 判断是否图片宽度是否小于等于屏幕宽度
-    public boolean isPictNarrowerThanScreen() {
-//        return getDrawable().getIntrinsicWidth() <= getWidth();
-        return false;
-    }
 }

@@ -4,6 +4,8 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import com.example.newcomerdemo.PictureBigItemFragment;
+import com.example.newcomerdemo.PictureListShowFragment;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
@@ -54,7 +56,11 @@ public class PicturesUrlGetter {
         call.enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                // TODO 错误处理
+                // 链接失败，传递给主线程
+                Message message = new Message();
+                message.what = whatTag;
+                message.arg1 = PictureListShowFragment.FAILURE_TAG;
+                handler.sendMessage(message);
             }
 
             @Override
@@ -71,12 +77,13 @@ public class PicturesUrlGetter {
                         items.add(item);
                         // 测试
                     }
-                    // 数据对象解析完毕，传递给主线程
+                    // 数据对象解析成功，传递给主线程
                     Message message = new Message();
                     message.what = whatTag;
+                    message.arg1 = PictureListShowFragment.SUCCESSFUL_TAG;
                     message.obj = items;
                     handler.sendMessage(message);
-                // TODO 错误处理 JSON 解析错误
+                    // TODO 错误处理 JSON 解析错误
                 } catch (JSONException e) {
                     e.printStackTrace();
                 // TODO 错误处理 JSON 对象转换错误

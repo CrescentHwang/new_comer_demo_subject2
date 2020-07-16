@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,13 +15,12 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.newcomerdemo.adapter.PictureListShowRecyclerViewAdapter;
+import com.example.newcomerdemo.message.dialog.MessageDialog;
 import com.example.newcomerdemo.model.PictureItem;
 import com.example.newcomerdemo.model.PicturesUrlGetter;
 import com.scwang.smart.refresh.footer.ClassicsFooter;
-import com.scwang.smart.refresh.header.ClassicsHeader;
 import com.scwang.smart.refresh.layout.api.RefreshLayout;
 import com.scwang.smart.refresh.layout.listener.OnLoadMoreListener;
-import com.scwang.smart.refresh.layout.listener.OnRefreshListener;
 
 import java.util.ArrayList;
 
@@ -30,10 +28,11 @@ public class PictureListShowFragment extends Fragment {
     private RecyclerView mPictureListRecyclerView;
     private ArrayList<PictureItem> items = new ArrayList<>();
     private RefreshLayout mRefreshLayout;
-    private static final int SUCCEED_GETTING_TAG = 1000;
+    public static final int PICTURE_GETTING_TAG = 1000;
+    public static final int SUCCESSFUL_TAG = 101;
+    public static final int FAILURE_TAG = 102;
     private int mPhotoPage = 1;
     private int mPhontCount = 40;
-    // TODO 结束时清理消息队列
     private static Handler mPicUrlGetterHandler;
 
     @Override
@@ -55,7 +54,7 @@ public class PictureListShowFragment extends Fragment {
             public void handleMessage(@NonNull Message msg) {
                 switch (msg.what) {
                     // 获取图片列表信息 成功
-                    case SUCCEED_GETTING_TAG :
+                    case PICTURE_GETTING_TAG :
                         dealWithItems(msg);
                         break;
                     default:
@@ -68,7 +67,7 @@ public class PictureListShowFragment extends Fragment {
         // 初始化组件
         initUI();
         // 首次获取 picture url
-        PicturesUrlGetter.getInstance().getPicturesUrl(mPicUrlGetterHandler, SUCCEED_GETTING_TAG, getUrl());
+        PicturesUrlGetter.getInstance().getPicturesUrl(mPicUrlGetterHandler, PICTURE_GETTING_TAG, getUrl());
         return v;
     }
 
@@ -79,11 +78,18 @@ public class PictureListShowFragment extends Fragment {
         return url;
     }
 
-    // 获取图片列表信息成功后的处理
+    // 获取图片列表信息后的处理
     private void dealWithItems(Message msg) {
-        items.addAll((ArrayList<PictureItem>)msg.obj);
-        // 更新 adapter
-        updateAdapter();
+        switch(msg.arg1) {
+            case SUCCESSFUL_TAG:
+                items.addAll((ArrayList<PictureItem>)msg.obj);
+                // 更新 adapter
+                updateAdapter();
+                break;
+            case FAILURE_TAG:
+                MessageDialog.showToast(getActivity(), "图片加载失败，请重试");
+                break;
+        }
     }
 
     // 更新 recyclerview 的 adapter
@@ -111,9 +117,16 @@ public class PictureListShowFragment extends Fragment {
         mRefreshLayout.setOnLoadMoreListener(new OnLoadMoreListener() {
             @Override
             public void onLoadMore(RefreshLayout refreshlayout) {
-                PicturesUrlGetter.getInstance().getPicturesUrl(mPicUrlGetterHandler, SUCCEED_GETTING_TAG, getUrl());
+                PicturesUrlGetter.getInstance().getPicturesUrl(mPicUrlGetterHandler, PICTURE_GETTING_TAG, getUrl());
                 refreshlayout.finishLoadMore(1000);
             }
         });
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        // 结束时清空handler的消息
+        mPicUrlGetterHandler.removeCallbacksAndMessages(null);
     }
 }
