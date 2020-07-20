@@ -6,13 +6,12 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
 import androidx.viewpager.widget.ViewPager;
-import androidx.viewpager2.adapter.FragmentStateAdapter;
-import androidx.viewpager2.widget.ViewPager2;
 
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
+import com.example.newcomerdemo.message.show.MyToastShow;
 import com.example.newcomerdemo.model.PictureItem;
 
 import java.util.ArrayList;
@@ -40,6 +39,10 @@ public class PictureBigActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_big_picture);
         mPictureItemsArrayList = getIntent().getParcelableArrayListExtra(PICTURES_ARRAY_LIST);
+        if(mPictureItemsArrayList == null) {
+            MyToastShow.showToast(this, "图片加载失败，请返回重试");
+            return;
+        }
         mPosition = getIntent().getIntExtra(POSITION_TAG,0);
         mViewPager = findViewById(R.id.picture_big_view_pager);
         // 设置 fragment

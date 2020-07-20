@@ -2,8 +2,8 @@ package com.example.newcomerdemo;
 
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.newcomerdemo.adapter.PictureListShowRecyclerViewAdapter;
-import com.example.newcomerdemo.message.dialog.MessageDialog;
+import com.example.newcomerdemo.message.show.MyToastShow;
 import com.example.newcomerdemo.model.PictureItem;
 import com.example.newcomerdemo.model.PicturesUrlGetter;
 import com.scwang.smart.refresh.footer.ClassicsFooter;
@@ -28,15 +28,21 @@ public class PictureListShowFragment extends Fragment {
     private RecyclerView mPictureListRecyclerView;
     private ArrayList<PictureItem> mItems = new ArrayList<>();;
     private RefreshLayout mRefreshLayout;
-    private int mPhotoPage = 0;
-    private int mPhontCount = 40;
-    private static Handler mPicUrlGetterHandler;
+    private static final String PHOTO_PAGE_TAG = "PictureListShowFragment.PhotoPage";
+    private static final String PHOTO_COUNT_TAG = "PictureListShowFragment.PhotoCount";
+    private int mPhotoPage = 1;
+    private int mPhotoCount = 40;
+    private int mLastPhotoPage = -1;
+    private PictListFragmentHanlder mPicUrlGetterHandler;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // 销毁 fragment 视图，但不销毁 fragment 本身
         setRetainInstance(true);
+        mPicUrlGetterHandler = new PictListFragmentHanlder(this);
+        // 首次获取 picture url
+        PicturesUrlGetter.getInstance().getPicturesUrl(mPicUrlGetterHandler, getUrl(mPhotoPage, mPhotoCount), mPhotoPage);
     }
 
     @Override
@@ -46,61 +52,51 @@ public class PictureListShowFragment extends Fragment {
         mPictureListRecyclerView = v.findViewById(R.id.picture_list_recyclerview);
         mPictureListRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
         // 实例化 handler
-        mPicUrlGetterHandler = new Handler(Looper.getMainLooper()) {
-            @Override
-            public void handleMessage(@NonNull Message msg) {
-                switch (msg.what) {
-                    // 获取图片列表信息 成功
-                    case PicturesUrlGetter.PICTURE_GETTING_TAG :
-                        if(isAdded()) {
-                            dealWithItems(msg);
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            }
-        };
         // 实例化上下拉刷新组件
         mRefreshLayout = (RefreshLayout)v.findViewById(R.id.picture_list_refresh_layout);
         // 初始化组件
         initUI();
-        // 首次获取 picture url
-        PicturesUrlGetter.getInstance().getPicturesUrl(mPicUrlGetterHandler, getUrl());
+
         return v;
     }
 
     // 获取图片列表信息的 url
-    private String getUrl() {
-        String url = "https://gank.io/api/v2/data/category/Girl/type/Girl/page/"+mPhotoPage+"/count/"+mPhontCount;
-        return url;
+    private String getUrl(int picturePage, int photoCount) {
+        return "https://gank.io/api/v2/data/category/Girl/type/Girl/page/"+picturePage+"/count/"+photoCount;
     }
 
     // 获取图片列表信息后的处理
     private void dealWithItems(Message msg) {
         switch(msg.arg1) {
             case PicturesUrlGetter.SUCCESSFUL_TAG: // 成功获取图片s Url
-                mItems.addAll((ArrayList<PictureItem>)msg.obj);
-                mPhotoPage++;
-                // 更新 adapter
-                updateAdapter();
+                if(isAdded()) {
+                    if(msg.arg2 != mLastPhotoPage) { // 因为异步请求，所以需要判断是不是重复请求同一页
+//                        Log.i("TEST", "GET ======================== " + msg.arg2);
+                        mItems.addAll((ArrayList<PictureItem>)msg.obj);
+                        mLastPhotoPage = mPhotoPage;
+                        mPhotoPage++; // 更新为下一页的页码
+                        // 更新 adapter
+                        updateAdapter();
+                    }
+                }
                 break;
             case PicturesUrlGetter.FAILURE_TAG: // 无法获取图片s Url
+                mRefreshLayout.finishLoadMore(false);
                 switch (msg.arg2) {
                     case PicturesUrlGetter.NO_PICTURE_TAG :
-                        MessageDialog.showToast(getActivity(), R.string.pictures_url_no_picture_error);
+                        MyToastShow.showToast(getActivity(), R.string.pictures_url_no_picture_error);
                         break;
                     case PicturesUrlGetter.REQUEST_ERROR :
-                        MessageDialog.showToast(getActivity(), R.string.pictures_url_request_error);
+                        MyToastShow.showToast(getActivity(), R.string.pictures_url_request_error);
                         break;
                     case PicturesUrlGetter.JSON_OBJECT_PARSE_ERROR :
-                        MessageDialog.showToast(getActivity(), R.string.pictures_url_json_object_parsing_error);
+                        MyToastShow.showToast(getActivity(), R.string.pictures_url_json_object_parsing_error);
                         break;
                     case PicturesUrlGetter.JSON_OBJECT_TRANSLATE_ERROR :
-                        MessageDialog.showToast(getActivity(), R.string.pictures_url_json_object_translate_error);
+                        MyToastShow.showToast(getActivity(), R.string.pictures_url_json_object_translate_error);
                         break;
                     default:
-                        MessageDialog.showToast(getActivity(), R.string.pictures_url_getting_error);
+                        MyToastShow.showToast(getActivity(), R.string.pictures_url_getting_error);
                 }
                 break;
         }
@@ -109,7 +105,9 @@ public class PictureListShowFragment extends Fragment {
     // 更新 recyclerview 的 adapter
     private void updateAdapter() {
         if (isAdded()) {
+//            Log.i("TEST", "------------------------ mPhotoPage = " + mPhotoPage);
             mPictureListRecyclerView.getAdapter().notifyDataSetChanged();
+            mRefreshLayout.finishLoadMore(true);
         }
     }
 
@@ -131,8 +129,7 @@ public class PictureListShowFragment extends Fragment {
         mRefreshLayout.setOnLoadMoreListener(new OnLoadMoreListener() {
             @Override
             public void onLoadMore(RefreshLayout refreshlayout) {
-                PicturesUrlGetter.getInstance().getPicturesUrl(mPicUrlGetterHandler, getUrl());
-                refreshlayout.finishLoadMore(500);
+                PicturesUrlGetter.getInstance().getPicturesUrl(mPicUrlGetterHandler, getUrl(mPhotoPage,mPhotoCount),mPhotoPage);
             }
         });
     }
@@ -142,5 +139,47 @@ public class PictureListShowFragment extends Fragment {
         super.onDestroy();
         // 结束时清空handler的消息
         mPicUrlGetterHandler.removeCallbacksAndMessages(null);
+        // handler 置空
+        mPicUrlGetterHandler = null;
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(PHOTO_PAGE_TAG, mPhotoPage);
+        outState.putInt(PHOTO_COUNT_TAG, mPhotoCount);
+    }
+
+    @Override
+    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
+        super.onViewStateRestored(savedInstanceState);
+        if (savedInstanceState != null) {
+            this.mPhotoPage = savedInstanceState.getInt(PHOTO_PAGE_TAG);
+            this.mPhotoCount = savedInstanceState.getInt(PHOTO_COUNT_TAG);
+        }
+    }
+
+    // 静态内部类 handler
+    private static class PictListFragmentHanlder extends Handler {
+        // 外部弱引用
+        private final PictureListShowFragment pictListShowFragment;
+
+        private PictListFragmentHanlder(PictureListShowFragment pictureListShowFragment) {
+            pictListShowFragment = pictureListShowFragment;
+        }
+
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            switch (msg.what) {
+                // 获取图片列表信息 成功
+                case PicturesUrlGetter.PICTURE_GETTING_TAG :
+                    if(pictListShowFragment != null && pictListShowFragment.isAdded()) {
+                        pictListShowFragment.dealWithItems(msg);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 }

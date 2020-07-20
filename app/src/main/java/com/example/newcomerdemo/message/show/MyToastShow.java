@@ -1,9 +1,9 @@
-package com.example.newcomerdemo.message.dialog;
+package com.example.newcomerdemo.message.show;
 
 import android.content.Context;
 import android.widget.Toast;
 
-public class MessageDialog {
+public class MyToastShow {
     public static void showToast(Context context, String msg) {
         Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
     }

@@ -4,16 +4,11 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
-import com.bumptech.glide.util.LogTime;
-import com.example.newcomerdemo.PictureBigItemFragment;
-import com.example.newcomerdemo.PictureListShowFragment;
+import com.example.newcomerdemo.bean.PictureUrlsJSONBean;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
 import org.jetbrains.annotations.NotNull;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,7 +21,6 @@ import okhttp3.Response;
 
 public class PicturesUrlGetter {
     private static volatile PicturesUrlGetter mInstance;
-    private Gson mGson;
     public static final int PICTURE_GETTING_TAG = 100;
     public static final int SUCCESSFUL_TAG = 101;
     public static final int FAILURE_TAG = 102;
@@ -34,6 +28,7 @@ public class PicturesUrlGetter {
     public static final int JSON_OBJECT_PARSE_ERROR = 104;
     public static final int JSON_OBJECT_TRANSLATE_ERROR = 105;
     public static final int REQUEST_ERROR = 106;
+    private Gson mGson = new Gson();
 
 
     private PicturesUrlGetter() {}
@@ -50,7 +45,7 @@ public class PicturesUrlGetter {
     }
 
 
-    public void getPicturesUrl(final Handler handler, final String url) {
+    public void getPicturesUrl(final Handler handler, final String url, final int photoPage) {
 
         OkHttpClient okHttpClient = new OkHttpClient();
 
@@ -71,37 +66,32 @@ public class PicturesUrlGetter {
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                Log.i("TEST", "call() ----------------------------------------");
-                Log.i("TEST", "request url = " + url);
-                String responseBody = response.body().string();
-                // 解析 JSON
                 try {
-                    JSONObject jsonObject = new JSONObject(responseBody);
-                    JSONArray dataArray = jsonObject.getJSONArray("data");
-                    if(dataArray.length() > 0) {
-                        ArrayList<PictureItem> items = new ArrayList<>();
-                        mGson = new Gson();
-                        for (int i = 0; i < dataArray.length(); i++) {
-                            PictureItem item = mGson.fromJson(String.valueOf(dataArray.getJSONObject(i)), PictureItem.class);
-                            items.add(item);
-                            Log.i("TEST", item.toString());
-                        }
-                        // 数据对象解析成功，传递给主线程
-                        Message message = new Message();
-                        message.what = PICTURE_GETTING_TAG;
-                        message.arg1 = SUCCESSFUL_TAG;
-                        message.obj = items;
-                        handler.sendMessage(message);
-                        // 测试
-                    } else {
+                    String responseBody = response.body().string();
+                    // 解析 JSON
+                    try {
+                        PictureUrlsJSONBean pictureUrlsJSONBean = mGson.fromJson(responseBody, PictureUrlsJSONBean.class);
+//                        Log.i("TEST", pictureUrlsJSONBean.toString());
+                        ArrayList<PictureItem> items = (ArrayList<PictureItem>) pictureUrlsJSONBean.getPictureItemList();
+                        if(items != null && items.size() > 0) { // 有 urls 的数据
+                            // 数据对象解析成功，传递给主线程
+                            Message message = Message.obtain();
+                            message.what = PICTURE_GETTING_TAG;
+                            message.arg1 = SUCCESSFUL_TAG;
+                            message.arg2 = photoPage;
+                            message.obj = items;
+                            if(handler != null) {
+                                handler.sendMessage(message);
+//                                Log.i("TEST", "SEND =========================== " + photoPage);
+                            }
+                        } else  {
                             failedGettingUrls(handler, PICTURE_GETTING_TAG, NO_PICTURE_TAG);
+                        }
+                    } catch (JsonSyntaxException jsonSyncException) {// 错误处理 JSON 对象转换错误
+                        failedGettingUrls(handler, PICTURE_GETTING_TAG, JSON_OBJECT_TRANSLATE_ERROR);
                     }
-                    // 错误处理 JSON 解析错误
-                } catch (JSONException e) {
-                    failedGettingUrls(handler, PICTURE_GETTING_TAG, JSON_OBJECT_PARSE_ERROR);
-                // 错误处理 JSON 对象转换错误
-                } catch (JsonSyntaxException jsonSyncException) {
-                    failedGettingUrls(handler, PICTURE_GETTING_TAG, JSON_OBJECT_TRANSLATE_ERROR);
+                } catch (NullPointerException npt) { // 错误处理 空指针
+                    failedGettingUrls(handler, PICTURE_GETTING_TAG, REQUEST_ERROR);
                 }
             }
         });
@@ -109,10 +99,12 @@ public class PicturesUrlGetter {
 
     private void failedGettingUrls(Handler handler, int whatTag, int errInfoTag) {
         // 链接失败，传递给主线程
-        Message message = new Message();
+        Message message = Message.obtain();
         message.what = whatTag;
         message.arg1 = FAILURE_TAG;
         message.arg2 = errInfoTag;
-        handler.sendMessage(message);
+        if(handler != null) {
+            handler.sendMessage(message);
+        }
     }
 }
